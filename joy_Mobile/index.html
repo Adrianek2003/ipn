@@ -55,7 +55,7 @@
         {
             var scene = new BABYLON.Scene(engine);
 
-            function Respawn_room($floor_texture, $wall_texture) 
+            function Respawn_room($floor_texture, $wall_texture, $table) 
             {
                 for (let posez = -10; posez < 20; posez+=10) 
                 {
@@ -127,9 +127,25 @@
                     wall.checkCollisions = true;
                 }
 
+                var table = new BABYLON.SceneLoader.ImportMesh("", "models/", $table, scene, 
+                function (newLoad) {
+                    for (table in newLoad){
+                    newLoad[table].scaling = new BABYLON.Vector3(0.25, 0.23, 0.25);
+                    newLoad[table].position = new BABYLON.Vector3(10, 1.3, 17.5);
+                    newLoad[table].checkCollisions = true;
+                }});
+
+                var table = new BABYLON.SceneLoader.ImportMesh("", "models/", $table, scene, 
+                function (newLoad) {
+                    for (table in newLoad){
+                    newLoad[table].scaling = new BABYLON.Vector3(0.25, 0.23, 0.25);
+                    newLoad[table].position = new BABYLON.Vector3(10, 1.3, -17.5);
+                    newLoad[table].checkCollisions = true;
+                }});
+
             }
 
-            function Main_hall($floor_texture, $wall_texture) 
+            function Main_hall($floor_texture, $wall_texture, $model) 
             {
                 for (let posez = -10; posez < 20; posez+=10) 
                 {
@@ -189,6 +205,17 @@
                     wall.checkCollisions = true;
 
                 }
+
+                // Modells
+                var alien = new BABYLON.SceneLoader.ImportMesh("", "models/", $model, scene, 
+                function (newLoad) {
+                    for (alien in newLoad){
+                    newLoad[alien].scaling = new BABYLON.Vector3(0.2, 0.2, 0.2);
+                    newLoad[alien].position = new BABYLON.Vector3(55, -1, 0);
+                    newLoad[alien].rotation = new BABYLON.Vector3(0, 0, 0);
+                    newLoad[alien].rotation.y = Math.PI / -2;
+                    newLoad[alien].checkCollisions = false;
+                }});
 
             }
 
@@ -321,7 +348,7 @@
 
             }
 
-            function Text_room($floor_texture, $wall_texture) 
+            function Text_room($floor_texture, $wall_texture, $model) 
             {
                 for (let posez = -20; posez < 30; posez+=10) 
                 {
@@ -435,9 +462,28 @@
                 text.rotation.z = Math.PI / 2;
                 text.checkCollisions = true;
 
+                // Modells
+                var column = new BABYLON.SceneLoader.ImportMesh("", "models/", $model, scene, 
+                function (newLoad) {
+                    for (column in newLoad){
+                    newLoad[column].scaling = new BABYLON.Vector3(1, 1.2, 1);
+                    newLoad[column].position = new BABYLON.Vector3(45, -0.3, 5);
+                    newLoad[column].rotation = new BABYLON.Vector3(0, 0, 0);
+                    newLoad[column].checkCollisions = true;
+                }});
+
+                var column = new BABYLON.SceneLoader.ImportMesh("", "models/", "column.glb", scene, 
+                function (newLoad) {
+                    for (column in newLoad){
+                    newLoad[column].scaling = new BABYLON.Vector3(1, 1.2, 1);
+                    newLoad[column].position = new BABYLON.Vector3(45, -0.3, -5);
+                    newLoad[column].rotation = new BABYLON.Vector3(0, 0, 0);
+                    newLoad[column].checkCollisions = true;
+                }});
+
             }
 
-            function Media_room($floor_texture, $wall_texture) 
+            function Media_room($floor_texture, $wall_texture, $model) 
             {
                 for (let posez = -40; posez < -20; posez+=10) 
                 {
@@ -549,6 +595,15 @@
                 null, { loop: true, autoplay: true, maxDistance: 15, useCustomAttenuation: true });
                 music1.attachToMesh(sphereMusic1);
 
+                // Modells
+                var sofa = new BABYLON.SceneLoader.ImportMesh("", "models/", $model, scene, 
+                function (newLoad) {
+                    for (sofa in newLoad){
+                    newLoad[sofa].scaling = new BABYLON.Vector3(2, 2, 2);
+                    newLoad[sofa].position = new BABYLON.Vector3(-58, -0.3, 35);
+                    newLoad[sofa].rotation.y = Math.PI / 2;
+                    newLoad[sofa].checkCollisions = false;
+                }});
             }
 
             function Presentation_room($floor_texture, $wall_texture) 
@@ -603,6 +658,7 @@
                     wall.checkCollisions = true;
                 }
 
+                // Photos
                 var photo = BABYLON.Mesh.CreateBox("crate", 0, scene);
                 photo.material = new BABYLON.StandardMaterial("Mat", scene);
                 photo.material.diffuseTexture = new BABYLON.Texture("img/1.png", scene);
@@ -635,68 +691,12 @@
             }
 
             // Mapmakers
-            Respawn_room("textures/floors/carpet.png", "textures/walls/whitebricks.png");
+            Respawn_room("textures/floors/carpet.png", "textures/walls/whitebricks.png", "table.glb");
             Corridors("textures/floors/carpet.png", "textures/walls/whitebricks.png");
-            Main_hall("textures/floors/carpet.png", "textures/walls/whitebricks.png");
-            Text_room("textures/floors/carpet.png", "textures/walls/whitebricks.png");
-            Media_room("textures/floors/media_floor.png", "textures/walls/media_wall.png");
+            Main_hall("textures/floors/carpet.png", "textures/walls/whitebricks.png", "alien.glb");
+            Text_room("textures/floors/carpet.png", "textures/walls/whitebricks.png", "column.glb");
+            Media_room("textures/floors/media_floor.png", "textures/walls/media_wall.png", "sofa.glb");
             Presentation_room("textures/floors/carpet.png", "textures/walls/whitebricks.png");
-
-            // GLB loader
-            // var load = new BABYLON.SceneLoader.ImportMesh("", "models/","smth.glb",scene);
-
-            var table = new BABYLON.SceneLoader.ImportMesh("", "models/", "table.glb", scene, 
-                function (newLoad) {
-                    for (table in newLoad){
-                    newLoad[table].scaling = new BABYLON.Vector3(0.25, 0.23, 0.25);
-                    newLoad[table].position = new BABYLON.Vector3(10, 1.3, 17.5);
-                    newLoad[table].checkCollisions = true;
-                }});
-
-            var table = new BABYLON.SceneLoader.ImportMesh("", "models/", "table.glb", scene, 
-                function (newLoad) {
-                    for (table in newLoad){
-                    newLoad[table].scaling = new BABYLON.Vector3(0.25, 0.23, 0.25);
-                    newLoad[table].position = new BABYLON.Vector3(10, 1.3, -17.5);
-                    newLoad[table].checkCollisions = true;
-                }});
-
-            var sofa = new BABYLON.SceneLoader.ImportMesh("", "models/", "sofa.glb", scene, 
-                function (newLoad) {
-                    for (sofa in newLoad){
-                    newLoad[sofa].scaling = new BABYLON.Vector3(2, 2, 2);
-                    newLoad[sofa].position = new BABYLON.Vector3(-58, -0.3, 35);
-                    newLoad[sofa].rotation.y = Math.PI / 2;
-                    newLoad[sofa].checkCollisions = false;
-                }});
-
-            var column = new BABYLON.SceneLoader.ImportMesh("", "models/", "column.glb", scene, 
-                function (newLoad) {
-                    for (column in newLoad){
-                    newLoad[column].scaling = new BABYLON.Vector3(1, 1.2, 1);
-                    newLoad[column].position = new BABYLON.Vector3(45, -0.3, 5);
-                    newLoad[column].rotation = new BABYLON.Vector3(0, 0, 0);
-                    newLoad[column].checkCollisions = true;
-                }});
-
-            var column = new BABYLON.SceneLoader.ImportMesh("", "models/", "column.glb", scene, 
-                function (newLoad) {
-                    for (column in newLoad){
-                    newLoad[column].scaling = new BABYLON.Vector3(1, 1.2, 1);
-                    newLoad[column].position = new BABYLON.Vector3(45, -0.3, -5);
-                    newLoad[column].rotation = new BABYLON.Vector3(0, 0, 0);
-                    newLoad[column].checkCollisions = true;
-                }});
-
-            var alien = new BABYLON.SceneLoader.ImportMesh("", "models/", "alien.glb", scene, 
-                function (newLoad) {
-                    for (alien in newLoad){
-                    newLoad[alien].scaling = new BABYLON.Vector3(0.2, 0.2, 0.2);
-                    newLoad[alien].position = new BABYLON.Vector3(55, -1, 0);
-                    newLoad[alien].rotation = new BABYLON.Vector3(0, 0, 0);
-                    newLoad[alien].rotation.y = Math.PI / -2;
-                    newLoad[alien].checkCollisions = false;
-                }});
 
             // True camera
             var camera = new BABYLON.FreeCamera("FreeCamera", new BABYLON.Vector3(0, 2.8, 0), scene);
