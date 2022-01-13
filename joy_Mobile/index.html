@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>Mobile</title>
+
+        <!-- Babylon.js implementation -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+        <script src="https://preview.babylonjs.com/ammo.js"></script>
+        <script src="https://preview.babylonjs.com/cannon.js"></script>
+        <script src="https://preview.babylonjs.com/Oimo.js"></script>
+        <script src="https://preview.babylonjs.com/earcut.min.js"></script>
+        <script src="https://preview.babylonjs.com/babylon.js"></script>
+        <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+        <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+        <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+        <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+        <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+        <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+        <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        </style>
+    </head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        var canvas = document.getElementById("renderCanvas");
+
+        var engine = null;
+        var scene = null;
+        var sceneToRender = null;
+        var createDefaultEngine = function() 
+        { 
+            return new BABYLON.Engine(canvas, true, 
+            { 
+                preserveDrawingBuffer: true, stencil: true,  disableWebGL2Support: false
+            }); 
+        };
+        var createScene = function () 
+        {
+            var scene = new BABYLON.Scene(engine);
+
+            function Respawn_room($floor_texture, $wall_texture) 
+            {
+                for (let posez = -10; posez < 20; posez+=10) 
+                {
+                    for (let posex = -15; posex < 25; posex+=10) 
+                    {
+                        var floor = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                        floor.material = new BABYLON.StandardMaterial("Mat", scene);
+                        floor.material.diffuseTexture = new BABYLON.Texture($floor_texture, scene);
+                        floor.material.diffuseTexture.hasAlpha = true;
+                        floor.position = new BABYLON.Vector3(posex, -1, posez);
+                        floor.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                        floor.checkCollisions = true;
+
+                        // //Ceiling
+                        // var ceiling = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                        // ceiling.material = new BABYLON.StandardMaterial("Mat", scene);
+                        // ceiling.material.diffuseTexture = new BABYLON.Texture($floor_texture, scene);
+                        // ceiling.material.diffuseTexture.hasAlpha = true;
+                        // ceiling.position = new BABYLON.Vector3(posex, 9, posez);
+                        // ceiling.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                        // ceiling.checkCollisions = true;
+                    }
+                }
+
+                for (let posez = -10; posez < 20; posez+=10) 
+                {
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(-20, 4, posez);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+                }
+
+                for (let posez = -10; posez < 20; posez+=20) 
+                {
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(20, 4, posez);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+                }
+
+                for (let posex = -15; posex < 25; posex+=10) 
+                {
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(posex, 4, 15);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.y = Math.PI / 2;
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(posex, 4, -15);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.y = Math.PI / 2;
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+                }
+
+            }
+
+            function Main_hall($floor_texture, $wall_texture) 
+            {
+                for (let posez = -10; posez < 20; posez+=10) 
+                {
+                    for (let posex = 45; posex < 75; posex+=10) 
+                    {
+                        var floor = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                        floor.material = new BABYLON.StandardMaterial("Mat", scene);
+                        floor.material.diffuseTexture = new BABYLON.Texture($floor_texture, scene);
+                        floor.material.diffuseTexture.hasAlpha = true;
+                        floor.position = new BABYLON.Vector3(posex, -1, posez);
+                        floor.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                        floor.checkCollisions = true;
+                    }
+                }
+
+                for (let posez = -10; posez < 20; posez+=20) 
+                {
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(40, 4, posez);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(70, 4, posez);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+                }
+
+                for (let posex = 45; posex < 75; posex+=20) 
+                {
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(posex, 4, 15);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.y = Math.PI / 2;
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(posex, 4, -15);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.y = Math.PI / 2;
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+
+                }
+
+            }
+
+            function Corridors($floor_texture, $wall_texture) 
+            {
+                for (let posex = 25; posex < 45; posex+=10) 
+                {
+                    var floor = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    floor.material = new BABYLON.StandardMaterial("Mat", scene);
+                    floor.material.diffuseTexture = new BABYLON.Texture($floor_texture, scene);
+                    floor.material.diffuseTexture.hasAlpha = true;
+                    floor.position = new BABYLON.Vector3(posex, -1, 0);
+                    floor.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    floor.checkCollisions = true;
+                }
+
+                for (let posex = 25; posex < 45; posex+=10) 
+                {
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(posex, 4, 5);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.y = Math.PI / 2;
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(posex, 4, -5);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.y = Math.PI / 2;
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+                }
+
+                // Main_hall<->Text_room
+                var floor = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                floor.material = new BABYLON.StandardMaterial("Mat", scene);
+                floor.material.diffuseTexture = new BABYLON.Texture($floor_texture, scene);
+                floor.material.diffuseTexture.hasAlpha = true;
+                floor.position = new BABYLON.Vector3(75, -1, 0);
+                floor.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                floor.checkCollisions = true;
+
+                for (let posex = 75; posex < 85; posex+=10) 
+                {
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(posex, 4, 5);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.y = Math.PI / 2;
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(posex, 4, -5);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.y = Math.PI / 2;
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+                }
+
+                // Main_hall<->Media_room/Main_hall<->Presentation_room
+                var floor = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                floor.material = new BABYLON.StandardMaterial("Mat", scene);
+                floor.material.diffuseTexture = new BABYLON.Texture($floor_texture, scene);
+                floor.material.diffuseTexture.hasAlpha = true;
+                floor.position = new BABYLON.Vector3(55, -1, -20);
+                floor.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                floor.checkCollisions = true;
+
+                var floor = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                floor.material = new BABYLON.StandardMaterial("Mat", scene);
+                floor.material.diffuseTexture = new BABYLON.Texture($floor_texture, scene);
+                floor.material.diffuseTexture.hasAlpha = true;
+                floor.position = new BABYLON.Vector3(55, -1, 20);
+                floor.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                floor.checkCollisions = true;
+
+                for (let posex = 50; posex < 60; posex+=10) 
+                {
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(posex, 4, -20);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(posex, 4, 20);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+                }
+
+                for (let posex = 60; posex < 70; posex+=10) 
+                {
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(posex, 4, -20);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(posex, 4, 20);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+                }
+
+            }
+
+            function Text_room($floor_texture, $wall_texture) 
+            {
+                for (let posez = -20; posez < 30; posez+=10) 
+                {
+                    for (let posex = 85; posex < 105; posex+=10) 
+                    {
+                        var floor = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                        floor.material = new BABYLON.StandardMaterial("Mat", scene);
+                        floor.material.diffuseTexture = new BABYLON.Texture($floor_texture, scene);
+                        floor.material.diffuseTexture.hasAlpha = true;
+                        floor.position = new BABYLON.Vector3(posex, -1, posez);
+                        floor.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                        floor.checkCollisions = true;
+                    }
+                }
+
+                for (let posez = -20; posez < 0; posez+=10) 
+                {
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(80, 4, posez);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+                }
+
+                for (let posez = 10; posez < 30; posez+=10) 
+                {
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(80, 4, posez);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+                }
+
+                for (let posez = -20; posez < 30; posez+=10) 
+                {
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(100, 4, posez);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+                }
+
+                for (let posex = 85; posex < 105; posex+=10) 
+                {
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(posex, 4, 25);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.y = Math.PI / 2;
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(posex, 4, -25);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.y = Math.PI / 2;
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+                }
+
+                // Text 
+                var text = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                text.material = new BABYLON.StandardMaterial("Mat", scene);
+                text.material.diffuseTexture = new BABYLON.Texture("textures/walls/TEXT.png", scene);
+                text.material.diffuseTexture.hasAlpha = true;
+                text.position = new BABYLON.Vector3(80.1, 4, 15);
+                text.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                text.rotation.z = Math.PI / 2;
+                text.checkCollisions = true;
+
+                var text = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                text.material = new BABYLON.StandardMaterial("Mat", scene);
+                text.material.diffuseTexture = new BABYLON.Texture("textures/walls/TEXT.png", scene);
+                text.material.diffuseTexture.hasAlpha = true;
+                text.position = new BABYLON.Vector3(80.1, 4, -15);
+                text.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                text.rotation.z = Math.PI / 2;
+                text.checkCollisions = true;
+
+                var text = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                text.material = new BABYLON.StandardMaterial("Mat", scene);
+                text.material.diffuseTexture = new BABYLON.Texture("textures/walls/TEXT.png", scene);
+                text.material.diffuseTexture.hasAlpha = true;
+                text.position = new BABYLON.Vector3(99.9, 4, -5);
+                text.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                text.rotation.x = Math.PI / -1;
+                text.rotation.z = Math.PI / 2;
+                text.checkCollisions = true;
+
+                var text = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                text.material = new BABYLON.StandardMaterial("Mat", scene);
+                text.material.diffuseTexture = new BABYLON.Texture("textures/walls/TEXT.png", scene);
+                text.material.diffuseTexture.hasAlpha = true;
+                text.position = new BABYLON.Vector3(99.9, 4, 5);
+                text.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                text.rotation.x = Math.PI / -1;
+                text.rotation.z = Math.PI / 2;
+                text.checkCollisions = true;
+
+            }
+
+            function Media_room($floor_texture, $wall_texture) 
+            {
+                for (let posez = -40; posez < -20; posez+=10) 
+                {
+                    for (let posex = 35; posex < 65; posex+=10) 
+                    {
+                        var floor = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                        floor.material = new BABYLON.StandardMaterial("Mat", scene);
+                        floor.material.diffuseTexture = new BABYLON.Texture($floor_texture, scene);
+                        floor.material.diffuseTexture.hasAlpha = true;
+                        floor.position = new BABYLON.Vector3(posex, -1, posez);
+                        floor.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                        floor.checkCollisions = true;
+                    }
+
+                    for (let posex = 35; posex < 65; posex+=10) 
+                    {
+                        var ceiling = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                        ceiling.material = new BABYLON.StandardMaterial("Mat", scene);
+                        ceiling.material.diffuseTexture = new BABYLON.Texture($floor_texture, scene);
+                        ceiling.material.diffuseTexture.hasAlpha = true;
+                        ceiling.position = new BABYLON.Vector3(posex, 9, posez);
+                        ceiling.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                        ceiling.checkCollisions = true;
+                    }
+                }
+
+                for (let posez = -40; posez < -20; posez+=10) 
+                {
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(60, 4, posez);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(30, 4, posez);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+                }
+
+                for (let posex = 35; posex < 65; posex+=10) 
+                {
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(posex, 4, -45);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.y = Math.PI / 2;
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+                }
+
+                for (let posex = 35; posex < 55; posex+=10) 
+                {
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(posex, 4, -25);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.y = Math.PI / 2;
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+                }
+
+                //Film
+                var screen = 
+                {
+                    height: 10, 
+                    width: 20, 
+                };
+                var screenOpts = BABYLON.MeshBuilder.CreatePlane("plane", screen, scene);
+                screenOpts.position = new BABYLON.Vector3(30.1, 4, -35);
+                screenOpts.rotation.y = Math.PI / -2;
+                var screenMat = new BABYLON.StandardMaterial("m", scene);
+                var screenTex = new BABYLON.VideoTexture("vidtex","films/wixapol.mp4", scene);
+                screenMat.diffuseTexture = screenTex;
+                screenMat.emissiveColor = new BABYLON.Color3.White();
+                screenOpts.material = screenMat;
+
+                //Barrier 
+                var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                wall.visibility = -1;
+                wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                wall.material.diffuseTexture.hasAlpha = false;
+                wall.position = new BABYLON.Vector3(40, 4, -35);
+                wall.scaling = new BABYLON.Vector3(10, 0.1, 20);
+                wall.rotation.z = Math.PI / 2;
+                wall.checkCollisions = true;
+
+                //Music 
+                var sphereMat = new BABYLON.StandardMaterial("sphereMat", scene);
+                sphereMat.diffuseColor = BABYLON.Color3.Red();
+                sphereMat.backFaceCulling = false;
+                sphereMat.alpha = 0;
+                var sphereMusic1 = BABYLON.Mesh.CreateSphere("musicsphere", 100, 20, scene);
+                sphereMusic1.material = sphereMat;
+                sphereMusic1.position = new BABYLON.Vector3(50, 3, -35);
+                var music1 = new BABYLON.Sound("music", "sounds/wixapol.mp3", scene, 
+                null, { loop: true, autoplay: true, maxDistance: 15, useCustomAttenuation: true });
+                music1.attachToMesh(sphereMusic1);
+
+            }
+
+            function Presentation_room($floor_texture, $wall_texture) 
+            {
+                for (let posex = 45; posex < 75; posex+=10) 
+                {
+                    var floor = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    floor.material = new BABYLON.StandardMaterial("Mat", scene);
+                    floor.material.diffuseTexture = new BABYLON.Texture($floor_texture, scene);
+                    floor.material.diffuseTexture.hasAlpha = true;
+                    floor.position = new BABYLON.Vector3(posex, -1, 30);
+                    floor.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    floor.checkCollisions = true;
+                }
+
+                for (let posex = 45; posex < 75; posex+=10) 
+                {
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(posex, 4, 35);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.y = Math.PI / 2;
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+                }
+
+                for (let posex = 40; posex < 90; posex+=30) 
+                {
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(posex, 4, 30);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+
+                }
+
+                for (let posex = 45; posex < 75; posex+=20) 
+                {
+                    var wall = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                    wall.material = new BABYLON.StandardMaterial("Mat", scene);
+                    wall.material.diffuseTexture = new BABYLON.Texture($wall_texture, scene);
+                    wall.material.diffuseTexture.hasAlpha = true;
+                    wall.position = new BABYLON.Vector3(posex, 4, 25);
+                    wall.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                    wall.rotation.y = Math.PI / 2;
+                    wall.rotation.z = Math.PI / 2;
+                    wall.checkCollisions = true;
+                }
+
+                var photo = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                photo.material = new BABYLON.StandardMaterial("Mat", scene);
+                photo.material.diffuseTexture = new BABYLON.Texture("img/1.png", scene);
+                photo.material.diffuseTexture.hasAlpha = true;
+                photo.position = new BABYLON.Vector3(55, 4, 35);
+                photo.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                photo.rotation.y = Math.PI / 2;
+                photo.rotation.z = Math.PI / 2;
+                photo.checkCollisions = true;
+
+                var photo = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                photo.material = new BABYLON.StandardMaterial("Mat", scene);
+                photo.material.diffuseTexture = new BABYLON.Texture("img/2.png", scene);
+                photo.material.diffuseTexture.hasAlpha = true;
+                photo.position = new BABYLON.Vector3(40, 4, 30);
+                photo.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                photo.rotation.z = Math.PI / 2;
+                photo.checkCollisions = true;
+
+                var photo = BABYLON.Mesh.CreateBox("crate", 0, scene);
+                photo.material = new BABYLON.StandardMaterial("Mat", scene);
+                photo.material.diffuseTexture = new BABYLON.Texture("img/3.png", scene);
+                photo.material.diffuseTexture.hasAlpha = true;
+                photo.position = new BABYLON.Vector3(70, 4, 30);
+                photo.scaling = new BABYLON.Vector3(10, 0.1, 10);
+                photo.rotation.x = Math.PI / -1;
+                photo.rotation.z = Math.PI / 2;
+                photo.checkCollisions = true;
+
+            }
+
+            // Mapmakers
+            Respawn_room("textures/floors/carpet.png", "textures/walls/whitebricks.png");
+            Corridors("textures/floors/carpet.png", "textures/walls/whitebricks.png");
+            Main_hall("textures/floors/carpet.png", "textures/walls/whitebricks.png");
+            Text_room("textures/floors/carpet.png", "textures/walls/whitebricks.png");
+            Media_room("textures/floors/media_floor.png", "textures/walls/media_wall.png");
+            Presentation_room("textures/floors/carpet.png", "textures/walls/whitebricks.png");
+
+            // GLB loader
+            // var load = new BABYLON.SceneLoader.ImportMesh("", "models/","smth.glb",scene);
+
+            var table = new BABYLON.SceneLoader.ImportMesh("", "models/", "table.glb", scene, 
+                function (newLoad) {
+                    for (table in newLoad){
+                    newLoad[table].scaling = new BABYLON.Vector3(0.25, 0.23, 0.25);
+                    newLoad[table].position = new BABYLON.Vector3(10, 1.3, 17.5);
+                    newLoad[table].checkCollisions = true;
+                }});
+
+            var table = new BABYLON.SceneLoader.ImportMesh("", "models/", "table.glb", scene, 
+                function (newLoad) {
+                    for (table in newLoad){
+                    newLoad[table].scaling = new BABYLON.Vector3(0.25, 0.23, 0.25);
+                    newLoad[table].position = new BABYLON.Vector3(10, 1.3, -17.5);
+                    newLoad[table].checkCollisions = true;
+                }});
+
+            var sofa = new BABYLON.SceneLoader.ImportMesh("", "models/", "sofa.glb", scene, 
+                function (newLoad) {
+                    for (sofa in newLoad){
+                    newLoad[sofa].scaling = new BABYLON.Vector3(2, 2, 2);
+                    newLoad[sofa].position = new BABYLON.Vector3(-58, -0.3, 35);
+                    newLoad[sofa].rotation.y = Math.PI / 2;
+                    newLoad[sofa].checkCollisions = false;
+                }});
+
+            var column = new BABYLON.SceneLoader.ImportMesh("", "models/", "column.glb", scene, 
+                function (newLoad) {
+                    for (column in newLoad){
+                    newLoad[column].scaling = new BABYLON.Vector3(1, 1.2, 1);
+                    newLoad[column].position = new BABYLON.Vector3(45, -0.3, 5);
+                    newLoad[column].rotation = new BABYLON.Vector3(0, 0, 0);
+                    newLoad[column].checkCollisions = true;
+                }});
+
+            var column = new BABYLON.SceneLoader.ImportMesh("", "models/", "column.glb", scene, 
+                function (newLoad) {
+                    for (column in newLoad){
+                    newLoad[column].scaling = new BABYLON.Vector3(1, 1.2, 1);
+                    newLoad[column].position = new BABYLON.Vector3(45, -0.3, -5);
+                    newLoad[column].rotation = new BABYLON.Vector3(0, 0, 0);
+                    newLoad[column].checkCollisions = true;
+                }});
+
+            var alien = new BABYLON.SceneLoader.ImportMesh("", "models/", "alien.glb", scene, 
+                function (newLoad) {
+                    for (alien in newLoad){
+                    newLoad[alien].scaling = new BABYLON.Vector3(0.2, 0.2, 0.2);
+                    newLoad[alien].position = new BABYLON.Vector3(55, -1, 0);
+                    newLoad[alien].rotation = new BABYLON.Vector3(0, 0, 0);
+                    newLoad[alien].rotation.y = Math.PI / -2;
+                    newLoad[alien].checkCollisions = false;
+                }});
+
+            // True camera
+            var camera = new BABYLON.FreeCamera("FreeCamera", new BABYLON.Vector3(0, 2.8, 0), scene);
+            camera.attachControl(canvas, true);
+            scene.gravity = new BABYLON.Vector3(0, -1, 0);
+            scene.collisionsEnabled = true;       
+            camera.checkCollisions = true;
+            camera.applyGravity = true;
+            camera.ellipsoid = new BABYLON.Vector3(1.8, 1.8, 1.8);
+
+            //Lights
+            var light0 = new BABYLON.DirectionalLight("Omni", new BABYLON.Vector3(10, 10, -10), scene);
+            light0.intensity = 0.7;
+            var light1 = new BABYLON.DirectionalLight("Omni", new BABYLON.Vector3(-10, 10, 10), scene);
+            light1.intensity = 0.7;
+            var light2 = new BABYLON.DirectionalLight("Omni", new BABYLON.Vector3(0, -1, 0), scene);
+            light2.intensity = 0.3;
+                   
+
+        
+            //Mobile control adding
+            let adt = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+            let xAddPos = 0;
+            let yAddPos = 0;
+            let xAddRot = 0;
+            let yAddRot = 0;
+            let sideJoystickOffset = 50;
+            let bottomJoystickOffset = -30;
+            let translateTransform;    
+        
+            //Left controler
+            let leftThumbContainer = makeThumbArea("leftThumb", 5, "white", null);
+            leftThumbContainer.height = "170px";
+            leftThumbContainer.width = "170px";
+            leftThumbContainer.isPointerBlocker = true;
+            leftThumbContainer.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            leftThumbContainer.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            leftThumbContainer.alpha = 0.5;
+            leftThumbContainer.left = sideJoystickOffset;
+            leftThumbContainer.top = bottomJoystickOffset;
+        
+            let leftInnerThumbContainer = makeThumbArea("leftInnterThumb", 4, "white", null);
+            leftInnerThumbContainer.height = "60px";
+            leftInnerThumbContainer.width = "60px";
+            leftInnerThumbContainer.isPointerBlocker = true;
+            leftInnerThumbContainer.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+            leftInnerThumbContainer.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+        
+            let leftPuck = makeThumbArea("leftPuck", 0, "white", "white");
+            leftPuck.height = "40px";
+            leftPuck.width = "40px";
+            leftPuck.isPointerBlocker = true;
+            leftPuck.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+            leftPuck.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+        
+            leftThumbContainer.onPointerDownObservable.add(function(coordinates) 
+            {
+                leftPuck.isVisible = true;
+                leftPuck.floatLeft = coordinates.x-(leftThumbContainer._currentMeasure.width*.5)-sideJoystickOffset;
+                leftPuck.left = leftPuck.floatLeft;
+                leftPuck.floatTop = adt._canvas.height - coordinates.y-(leftThumbContainer._currentMeasure.height*.5)+bottomJoystickOffset;
+                leftPuck.top = leftPuck.floatTop*-1;
+                leftPuck.isDown = true;
+                leftThumbContainer.alpha = 1;
+            });
+        
+            leftThumbContainer.onPointerUpObservable.add(function(coordinates) 
+            {
+                xAddPos = 0;
+                yAddPos = 0;
+                leftPuck.isDown = false;
+                leftPuck.isVisible = false;
+                leftThumbContainer.alpha = 0.5;
+            });
+        
+            leftThumbContainer.onPointerMoveObservable.add(function(coordinates) 
+            {
+                if (leftPuck.isDown) 
+                {
+                    xAddPos = coordinates.x-(leftThumbContainer._currentMeasure.width*.5)-sideJoystickOffset;
+                    yAddPos = adt._canvas.height - coordinates.y-(leftThumbContainer._currentMeasure.height*.5)+bottomJoystickOffset;
+                    leftPuck.floatLeft = xAddPos;
+                    leftPuck.floatTop = yAddPos*-1;
+                    leftPuck.left = leftPuck.floatLeft;
+                    leftPuck.top = leftPuck.floatTop;
+                }
+            });
+            
+            adt.addControl(leftThumbContainer);
+            leftThumbContainer.addControl(leftInnerThumbContainer);
+            leftThumbContainer.addControl(leftPuck);
+            leftPuck.isVisible = false;
+        
+            //Right controler
+            let rightThumbContainer = makeThumbArea("rightThumb", 5, "white", null);
+            rightThumbContainer.height = "170px";
+            rightThumbContainer.width = "170px";
+            rightThumbContainer.isPointerBlocker = true;
+            rightThumbContainer.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+            rightThumbContainer.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+            rightThumbContainer.alpha = 0.5;
+            rightThumbContainer.left = -sideJoystickOffset;
+            rightThumbContainer.top = bottomJoystickOffset;
+            
+            let rightInnerThumbContainer = makeThumbArea("rightInnterThumb", 4, "white", null);
+            rightInnerThumbContainer.height = "60px";
+            rightInnerThumbContainer.width = "60px";
+            rightInnerThumbContainer.isPointerBlocker = true;
+            rightInnerThumbContainer.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+            rightInnerThumbContainer.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+        
+            let rightPuck = makeThumbArea("rightPuck",0, "white", "white");
+            rightPuck.height = "40px";
+            rightPuck.width = "40px";
+            rightPuck.isPointerBlocker = true;
+            rightPuck.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+            rightPuck.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+        
+            rightThumbContainer.onPointerDownObservable.add(function(coordinates) 
+            {
+                rightPuck.isVisible = true;
+                rightPuck.floatLeft = adt._canvas.width - coordinates.x-(rightThumbContainer._currentMeasure.width*.5)-sideJoystickOffset;
+                rightPuck.left = rightPuck.floatLeft*-1;
+                rightPuck.floatTop = adt._canvas.height - coordinates.y-(rightThumbContainer._currentMeasure.height*.5)+bottomJoystickOffset;
+                rightPuck.top = rightPuck.floatTop*-1;
+                rightPuck.isDown = true;
+                rightThumbContainer.alpha = 1;
+            });
+        
+            rightThumbContainer.onPointerUpObservable.add(function(coordinates) 
+            {
+                xAddRot = 0;
+                yAddRot = 0;
+                rightPuck.isDown = false;
+                rightPuck.isVisible = false;
+                rightThumbContainer.alpha = 0.5;
+            });        
+        
+            rightThumbContainer.onPointerMoveObservable.add(function(coordinates) 
+            {
+                if (rightPuck.isDown) 
+                {
+                    xAddRot = adt._canvas.width - coordinates.x-(rightThumbContainer._currentMeasure.width*.5)-sideJoystickOffset;
+                    yAddRot = adt._canvas.height - coordinates.y-(rightThumbContainer._currentMeasure.height*.5)+bottomJoystickOffset;
+                    rightPuck.floatLeft = xAddRot*-1;
+                    rightPuck.floatTop = yAddRot*-1;
+                    rightPuck.left = rightPuck.floatLeft;
+                    rightPuck.top = rightPuck.floatTop;
+                }
+            });
+        
+            adt.addControl(rightThumbContainer);
+            rightThumbContainer.addControl(rightInnerThumbContainer);
+            rightThumbContainer.addControl(rightPuck);
+            rightPuck.isVisible = false;
+        
+            camera.attachControl(canvas, true);
+        
+            scene.registerBeforeRender(function()
+            {
+                translateTransform = BABYLON.Vector3.TransformCoordinates(new BABYLON.Vector3(xAddPos/3000, 0, yAddPos/3000), BABYLON.Matrix.RotationY(camera.rotation.y));
+                camera.cameraDirection.addInPlace(translateTransform);
+                camera.cameraRotation.y += xAddRot/15000*-1;
+                camera.cameraRotation.x += yAddRot/15000*-1;
+            }); 
+        
+            function makeThumbArea(name, thickness, color, background, curves)
+            {
+                let rect = new BABYLON.GUI.Ellipse();
+                rect.name = name;
+                rect.thickness = thickness;
+                rect.color = color;
+                rect.background = background;
+                rect.paddingLeft = "0px";
+                rect.paddingRight = "0px";
+                rect.paddingTop = "0px";
+                rect.paddingBottom = "0px";
+                return rect;
+            }
+            return scene;
+        }
+
+        window.initFunction = async function() 
+        {
+            var asyncEngineCreation = async function()
+            {
+                try 
+                {
+                    return createDefaultEngine();
+                } 
+                catch(e) 
+                {
+                    console.log("the available createEngine function failed. Creating the default engine instead");
+                    return createDefaultEngine();
+                }
+            }
+            window.engine = await asyncEngineCreation();
+            if (!engine) throw 'engine should not be null.';
+            window.scene = createScene();
+        };
+        initFunction().then(() => 
+        {
+            sceneToRender = scene        
+            engine.runRenderLoop(function () 
+            {
+                if (sceneToRender && sceneToRender.activeCamera) 
+                {
+                    sceneToRender.render();
+                }
+            });
+        });
+        window.addEventListener("resize", function () 
+        {
+            engine.resize();
+        });
+    </script>
+</body>
+</html>
